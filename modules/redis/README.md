@@ -11,17 +11,6 @@ The redis cluster is managed by AWS and automatically detects and replaces faile
 and patches, enables easy scaling of the cluster both horizontally (add more nodes) and vertically (increase the power
 of existing nodes), and simplifies backup and restore functionality.
 
-#### Terraform Limitations with ElastiCache
-
-*NOTE: Currently, Terraform only supports replication and multi-AZ clusters for memcached and not Redis, so we must
-make use of the [aws_cloudformation_stack](https://www.terraform.io/docs/providers/aws/r/cloudformation_stack.html)
-terraform resource type to create the Redis replication group.*
-
-*Once Terraform resolves a few bugs (see [#4361](https://github.com/hashicorp/terraform/issues/4361),
-[#4363](https://github.com/hashicorp/terraform/pull/4363), [#4946](https://github.com/hashicorp/terraform/issues/4946),
-and [#6836](https://github.com/hashicorp/terraform/pull/6836)), we can remove the `aws_cloudformation_stack` resource
-and use native terraform resource types only.*
-
 ## About Amazon ElastiCache
 
 ### What is Amazon ElastiCache?
@@ -43,8 +32,8 @@ that this cluster can only ever have exactly one node.
 ElastiCache does support "Read Replicas", which are nodes that asynchronously receive a copy of the data written to the
 primary node. The Read Replicas and primary node are all grouped together into a "Replication Group".
 
-If the primary node were to fail abd the `enable_multi_az` Terraform variable is set to `true`, ElastiCache will
-automatically promote a Read Replica to be the new primary node. Note that any data that was written to the primary
+If the primary node were to fail and the `enable_automatic_failover` Terraform variable is set to `true`, ElastiCache
+will automatically promote a Read Replica to be the new primary node. Note that any data that was written to the primary
 node and not yet copied to the read replica will be lost, however this is likely to be a very small amount of data.
 
 ### How do you connect to the Redis Replication Group?
@@ -70,9 +59,10 @@ There are two ways to scale the Redis Replication Group:
   clusters") using the `instance_type` parameter (see
   [here](https://aws.amazon.com/elasticache/details/#Available_Cache_Node_Types) for valid values).
 
-- **Horizontal:** You can add up to 6 total nodes (6 redis cache clusters) to a Replication Group. There is always a
-  primary cache cluster where all writes take place, but you can reduce load on this primary cache cluster by
-  offloading reads to the non-primary nodes, which are known as Read Replicas.
+- **Horizontal:** You can add up to 6 total nodes (6 redis cache clusters) to a Replication Group using the
+  `replication_group_size` parameter. There is always a primary cache cluster where all writes take place, but you can
+  reduce load on this primary cache cluster by offloading reads to the non-primary nodes, which are known as Read
+  Replicas.
 
 For more info on both methods, see [Scaling Redis Replication
 Groups](http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Scaling.RedisReplGrps.html).
@@ -114,11 +104,6 @@ The most confusing aspect of ElastiCache for Redis is the terminology:
   then your app may fail to reach the new primary node in the event of a failure.
 
 - The only way to add more storage space to a Redis Cluster (individual node) is to scale up to a larger node type.
-
-- Our use of CloudFormation to make up for Terraform's lack of support for Replication Groups means we lose the
-  [apply_immediately](https://www.terraform.io/docs/providers/aws/r/elasticache_cluster.html#apply_immediately)
-  property. As a result, any change to the *engine version* or *node type* will be applied during the next maintenance
-  window. Other modifications, such as changing the maintenance window, are applied immediately by default.
 
 ## How do you use this module?
 
