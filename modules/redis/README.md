@@ -13,6 +13,8 @@ of existing nodes), and simplifies backup and restore functionality.
 
 ## About Amazon ElastiCache
 
+_**WARNING!** We recently became aware that our Terraform Module may no longer reflect the latest sharding functionality for Redis. We will update our Terraform modules and the corresponding docs (below) shortly._
+
 ### What is Amazon ElastiCache?
 
 Before [Amazon ElastiCache](http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/WhatIs.html) existed, teams
@@ -24,17 +26,14 @@ Behind the scenes, ElastiCache runs on EC2 Instances located in subnets and prot
 
 ### How does clustering work in ElastiCache for Redis?
 
-An important limitation of ElastiCache for Redis is that there is no support for [partitioning](http://redis.io/topics/partitioning)
-(aka sharding) in Redis. Instead ElastiCache for Redis supports only a single "primary node" where all writes (and
-optionally reads) are directed. Confusingly, ElastiCache calls each individual redis node a "Cache Cluster", despite
-that this cluster can only ever have exactly one node.
+Prior to October 2016, ElastiCache for Redis did not support [partitioning](http://redis.io/topics/partitioning)
+(aka sharding) in Redis. Instead, ElastiCache for Redis supported only a single "primary node" where all writes were directed. It also borrowed its terminology from the original days of supporting just Memcached and wound up using confusing terms like calling each individual redis node a "Cache Cluster", despite that this cluster could only ever have exactly one node.
 
-ElastiCache does support "Read Replicas", which are nodes that asynchronously receive a copy of the data written to the
-primary node. The Read Replicas and primary node are all grouped together into a "Replication Group".
+After October 2016, Amazon finally [clarified the terminology](http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/WhatIs.Terms.html), but the requirement to keep API calls backwards-compatibile meant that the terminology used in the Amazon docs ("node", "cluster", "shard") does not cleanly correspond to the terminology used in the API. As a result, you may notice that some of the Terraform variable names in the Gruntwork modules are no longer intuitive, though we've tried to label these as thoroughly as possible. In some cases, we may need to update our API to match the latest terminology and functionality. If you encounter any issues with confusing names/descriptions or missing functionality, please let us know by emailing [mailto:support@gruntwork.io](support@gruntwork.io).
 
-If the primary node were to fail and the `enable_automatic_failover` Terraform variable is set to `true`, ElastiCache
-will automatically promote a Read Replica to be the new primary node. Note that any data that was written to the primary
-node and not yet copied to the read replica will be lost, however this is likely to be a very small amount of data.
+As a quick summary of the current terminology, you can now place individual Redis **nodes** into a Redis **cluster**, with the option to distribute your data across one or more **shards**, each of which can itself be replicated using **ElastiCache Replication.**
+
+For additional information, see the [official docs](http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/WhatIs.Components.html).
 
 ### How do you connect to the Redis Replication Group?
 
@@ -69,6 +68,12 @@ Groups](http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Scaling.Re
 
 ### ElastiCache for Redis Terminology
 
+#### Updated Terminology
+
+Coming soon!
+
+#### Original Terminology
+
 The most confusing aspect of ElastiCache for Redis is the terminology:
 
 - **Cluster:** In ElastiCache, each Redis node is labelled its own "cluster", despite that there is only a single node
@@ -90,10 +95,6 @@ The most confusing aspect of ElastiCache for Redis is the terminology:
   and may result in additional data loss.
 
 ### Common Gotcha's
-
-- ElastiCache Redis doesn't support sharding (however ElastiCache memcached does) so make sure your app can tolerate a
-  small amount of data loss in the event that the primary node fails to sync some of its data to a read replica before
-  failing.
 
 - In the event of a Redis failover, *you will experience a small period of time during which writes are not accepted*,
   so make sure your app can handle this gracefully. In fact, consider simulating Redis failovers on a regular basis or
