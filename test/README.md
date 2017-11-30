@@ -23,8 +23,8 @@ cleanup.
 #### Prerequisites
 
 - Install the latest version of [Go](https://golang.org/).
-- Install [glide](https://glide.sh/) for Go dependency management. On OS X, the simplest way to install is
-  `brew update; brew install glide`.
+- Install [dep](https://github.com/golang/dep) for Go dependency management. On OS X, the simplest way to install is
+  `brew update; brew install dep`.
 - Install [Terraform](https://www.terraform.io/downloads.html).
 - Add your AWS credentials as environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
 - For some of the tests, you also need to set the `GITHUB_OAUTH_TOKEN` environment variable to a valid GitHub
@@ -32,11 +32,11 @@ cleanup.
 
 #### Setup
 
-Download Go dependencies using glide:
+Download Go dependencies using dep:
 
 ```
 cd test
-glide update
+dep ensure
 ```
 
 #### Run all the tests
