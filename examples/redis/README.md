@@ -6,7 +6,7 @@ If you're not a customer, contact us at <info@gruntwork.io> or <http://www.grunt
 # Redis Example
 
 This folder contains an example of how to use the [Redis module](/modules/redis) to create a  [Redis](http://redis.io/)
-Replication Group using AWS ElastiCache.
+Cluster using AWS ElastiCache.
 
 ## How do you run this example?
 
